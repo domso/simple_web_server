@@ -1,5 +1,6 @@
 # Simple Webserver
-Very simple webserver written in C++
+Very simple webserver written in plain C++.
+It requires only my "network"-project. (https://github.com/domso/network)
 
 It only supports simple base-http.
 Each file in the www-folder is accessable.
