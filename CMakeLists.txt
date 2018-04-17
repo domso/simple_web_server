@@ -3,7 +3,7 @@ project(web_server)
 
 include_directories(../network/)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -g -std=c++17 -fPIC -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -g -std=c++11 -fPIC -pthread")
 
 add_executable(web_server src/main.cpp src/connection_thread.cpp src/http_parser.cpp src/http_request.cpp src/file_loader.cpp src/http_status_code.cpp)
 
