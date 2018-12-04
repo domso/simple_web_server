@@ -3,12 +3,12 @@
 #include "http_parser.h"
 #include "http_request.h"
 
-void connection_thread::main(std::shared_ptr<network::tcp_connection<network::ipv4_addr>> connection, shared_context& context) {
+void connection_thread::main(network::tcp_connection<network::ipv4_addr> connection, shared_context& context) {
     network::pkt_buffer recvBuffer(1024);   
     network::pkt_buffer sendBuffer(1024); 
     network::pkt_buffer requestBuffer(1024);    
 
-    while(connection->recv_pkt(recvBuffer).first) {        
+    while(connection.recv_pkt(recvBuffer).first) {        
         requestBuffer.push_buffer(recvBuffer);        
         
         for (int i = 3; i < requestBuffer.msg_length(); i++) {
@@ -23,8 +23,8 @@ void connection_thread::main(std::shared_ptr<network::tcp_connection<network::ip
                 
                 sendBuffer.push_string(build_response(response.first));
         
-                connection->send_pkt(sendBuffer);
-                connection->send_data<char>(response.second.data(), response.second.size());
+                connection.send_pkt(sendBuffer);
+                connection.send_data<char>(response.second.data(), response.second.size());
                 
                 requestBuffer.clear();
                 sendBuffer.clear();

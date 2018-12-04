@@ -12,12 +12,12 @@ int main(int argc, char **argv) {
     while (true) {
         auto newConnection = socket.accept_connection();
     
-        if (newConnection.get() == nullptr) {
+        if (!newConnection) {
             // skt is broken
             return 0;
         }        
         
-        std::thread newThread(&connection_thread::main, newConnection, std::ref(context));
+        std::thread newThread(&connection_thread::main, std::move(*newConnection), std::ref(context));
         newThread.detach();
     }
     
