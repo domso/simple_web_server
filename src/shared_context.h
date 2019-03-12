@@ -3,5 +3,5 @@
 #include "http_status_code.h"
 
 struct shared_context {    
-    http_status_code statusCodes;
+    http_status_code statusCodes; 
 };
