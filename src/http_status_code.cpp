@@ -1,6 +1,6 @@
 #include "http_status_code.h"
 
-http_status_code::http_status_code() {
+web_server::http_status_code::http_status_code() {
     m_codes.insert({100, "Continue"});
     m_codes.insert({101, "Switching Protocols"});
     m_codes.insert({102, "Processing"});
@@ -68,6 +68,6 @@ http_status_code::http_status_code() {
     m_codes.insert({511, "Network Authentication Required"});
 }
 
-const std::string& http_status_code::get(const int status) {
+const std::string& web_server::http_status_code::get(const int status) {
     return m_codes[status];
 }

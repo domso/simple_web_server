@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace web_server {
+
 class http_status_code {
 public:
     http_status_code();
@@ -10,3 +12,5 @@ public:
 private:
     std::unordered_map<int, std::string> m_codes;
 };
+
+}

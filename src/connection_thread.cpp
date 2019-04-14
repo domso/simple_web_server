@@ -3,7 +3,7 @@
 #include "http_parser.h"
 #include "http_request.h"
 
-void connection_thread::main(network::ssl_connection<network::ipv4_addr> connection, shared_context& context) {
+void web_server::connection_thread::main(network::ssl_connection<network::ipv4_addr> connection, shared_context& context) {
     network::pkt_buffer recvBuffer(1024);   
     network::pkt_buffer sendBuffer(1024); 
     network::pkt_buffer requestBuffer(1024);       
@@ -33,7 +33,7 @@ void connection_thread::main(network::ssl_connection<network::ipv4_addr> connect
     }
 }
 
-std::string connection_thread::build_response(const std::unordered_map<std::string, std::string>& fieldMap) {        
+std::string web_server::connection_thread::build_response(const std::unordered_map<std::string, std::string>& fieldMap) {        
     std::string result;    
     auto it = fieldMap.find("STATUS");
     

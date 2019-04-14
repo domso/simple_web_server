@@ -2,28 +2,40 @@
 #include "file_loader.h"
 
 std::pair<std::unordered_map<std::string, std::string>, std::vector<char>> 
-http_request::handle_request(const std::unordered_map<std::string, std::string>& requestFields, shared_context& context) {
+web_server::http_request::handle_request(const std::unordered_map<std::string, std::string>& requestFields, shared_context& context) {
     std::unordered_map<std::string, std::string> responseFields;
-    std::vector<char> output = file_loader::load(filter_filename(requestFields.at("GET")));
     
-    responseFields["Server"] = "MyServer";
-    responseFields["Content-Length"] = std::to_string(output.size());
+    std::pair<std::vector<char>, int> output = execute_callback(requestFields, context);
+    
+    responseFields["Server"] = context.currentConfig.name;
+    responseFields["Content-Length"] = std::to_string(output.first.size());
     responseFields["Connection"] = "keep-alive";
+    responseFields["STATUS"] = std::to_string(output.second) + " " + context.statusCodes.get(output.second);
     
-    if (output.empty()) {
-        set_status(responseFields, context, 404);
+    return std::make_pair(responseFields, output.first);
+}
+
+std::pair<std::vector<char>, int> web_server::http_request::execute_callback(const std::unordered_map<std::string, std::string>& requestFields, const shared_context& context) {
+    std::string requestedResource = requestFields.at("GET").substr(0, requestFields.at("GET").find_first_of("?#"));
+    std::pair<std::vector<char>, int> result;
+    result.second = 404;
+    
+    auto search = context.callbackMap.find(requestedResource);    
+    if (search != context.callbackMap.end()) {
+        result = search->second(nullptr);
     } else {
-        set_status(responseFields, context, 200);
+        if (context.currentConfig.allow_file_access) {
+            result.first = file_loader::load(filter_filename(requestFields.at("GET")), context.currentConfig);
+            if (!result.first.empty()) {
+                result.second = 200;
+            }
+        }
     }
     
-    return std::make_pair(responseFields, output);
+    return result;
 }
 
-void http_request::set_status(std::unordered_map<std::string, std::string>& responseFields, shared_context& context, const int status) {
-    responseFields["STATUS"] = std::to_string(status) + " " + context.statusCodes.get(status);
-}
-
-std::string http_request::filter_filename(const std::string& filename) {
+std::string web_server::http_request::filter_filename(const std::string& filename) {
     std::string result = filename;
         
     if (result.find("..") != std::string::npos) {

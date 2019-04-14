@@ -1,6 +1,6 @@
 #include "http_parser.h"
 
-std::unordered_map<std::string, std::string> http_parser::parse_request(const std::string& header) {   
+std::unordered_map<std::string, std::string> web_server::http_parser::parse_request(const std::string& header) {   
     std::unordered_map<std::string, std::string> result;
 
     int currentPosition = 0;
@@ -18,7 +18,7 @@ std::unordered_map<std::string, std::string> http_parser::parse_request(const st
     return result;
 }
 
-void http_parser::extract_header_option(std::unordered_map<std::string, std::string>& requestFields, const std::string& header, const int start, const int length) {
+void web_server::http_parser::extract_header_option(std::unordered_map<std::string, std::string>& requestFields, const std::string& header, const int start, const int length) {
     for (int i = 0; i < length; i++) {
         if (header[start + i] == ':' || header[start + i] == ' ') {
             requestFields[header.substr(start, i)] = header.substr(start + i + 1, length - i - 1);
@@ -26,7 +26,7 @@ void http_parser::extract_header_option(std::unordered_map<std::string, std::str
     }
 }
 
-std::string http_parser::extract_requested_file(const std::string& headerField) {
+std::string web_server::http_parser::extract_requested_file(const std::string& headerField) {
     int position = headerField.find(" ");
     std::string result;
     

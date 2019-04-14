@@ -8,10 +8,10 @@ find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -std=c++17 -pthread")
 
-add_executable(web_server src/main.cpp src/connection_thread.cpp src/http_parser.cpp src/http_request.cpp src/file_loader.cpp src/http_status_code.cpp)
-
+add_library(web_server src/connection_thread.cpp src/http_parser.cpp src/http_request.cpp src/file_loader.cpp src/http_status_code.cpp src/web_server.cpp)
 target_link_libraries(web_server ${OPENSSL_LIBRARIES})
-install(TARGETS web_server RUNTIME DESTINATION bin)
 
+add_executable(test tests/main.cpp)
+target_link_libraries(test web_server)
 
 
