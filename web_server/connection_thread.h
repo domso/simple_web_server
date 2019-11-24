@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+
 #include "network/ssl_connection.h"
 #include "shared_context.h"
 
