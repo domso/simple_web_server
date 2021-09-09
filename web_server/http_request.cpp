@@ -1,18 +1,21 @@
 #include "http_request.h"
 // #include "file_loader.h"
 
+#include <openssl/sha.h>
 #include <iostream>
 
 std::pair<std::unordered_map<std::string, std::string>, std::vector<char>> 
 web_server::http_request::handle_request(const std::unordered_map<std::string, std::string>& requestFields, shared_context& context) {
     std::unordered_map<std::string, std::string> responseFields;
-    std::pair<std::vector<char>, int> output = execute_callback(requestFields, responseFields, context);
     
     responseFields["Server"] = context.currentConfig.name;
     responseFields["Connection"] = "keep-alive";
+    
+    std::pair<std::vector<char>, int> output = execute_callback(requestFields, responseFields, context);
+
     responseFields["Content-Length"] = std::to_string(output.first.size());
     responseFields["STATUS"] = std::to_string(output.second) + " " + context.statusCodes.get(output.second);
-    
+        
     return std::make_pair(responseFields, output.first);
 }
 
@@ -23,18 +26,32 @@ std::pair<std::vector<char>, int> web_server::http_request::execute_callback(con
     
     result.second = 404;    
     
-    auto search = context.moduleMap.find(requestedModule);    
-    if (search != context.moduleMap.end()) {
-        const module_context& currentModule = search->second;
-            
-        if (currentModule.authentication.first == "") {
-            result = search->second.callback(requestedResource, context.currentConfig);            
-        } else {
-            if (requestFields.count("Authorization") == 0 || requestFields.at("Authorization") != " Basic " + string_to_base64(currentModule.authentication.first + ":" + currentModule.authentication.second) + "\r\n") {                
-                responseFields["WWW-Authenticate"] = "Basic realm=\"" + search->second.name + "\"";
-                result.second = 401;
+    if (requestFields.count("Sec-WebSocket-Key") > 0) {
+        if (requestFields.count("Upgrade") > 0) {
+            responseFields["Upgrade"] = trim_string(requestFields.at("Upgrade"));
+        }
+        if (requestFields.count("Connection") > 0) {
+            responseFields["Connection"] = ", " + trim_string(requestFields.at("Connection"));
+        }
+        
+        responseFields["Sec-WebSocket-Accept"] = websocket_response_key(trim_string(requestFields.at("Sec-WebSocket-Key")));
+        
+        result.second = 101;
+
+    } else {    
+        auto search = context.moduleMap.find(requestedModule);    
+        if (search != context.moduleMap.end()) {
+            const module_context& currentModule = search->second;
+                
+            if (currentModule.authentication.first == "") {
+                result = search->second.callback(requestedResource, context.currentConfig);            
             } else {
-                result = search->second.callback(requestedResource, context.currentConfig);                            
+                if (requestFields.count("Authorization") == 0 || requestFields.at("Authorization") != " Basic " + string_to_base64(currentModule.authentication.first + ":" + currentModule.authentication.second) + "\r\n") {                
+                    responseFields["WWW-Authenticate"] = "Basic realm=\"" + search->second.name + "\"";
+                    result.second = 401;
+                } else {    
+                    result = search->second.callback(requestedResource, context.currentConfig);                            
+                }
             }
         }
     }
@@ -52,6 +69,15 @@ std::string web_server::http_request::get_module(const std::string& ressource) {
     }    
 }
 
+
+std::string web_server::http_request::trim_string(const std::string& s) {        
+    if (s.length() > 3) {
+        return s.substr(1, s.length() - 3);
+    } else {
+        return "";
+    }
+}
+
 char web_server::http_request::single_to_base64(const uint8_t a, const bool isPad) {
     if (isPad)  return '=';
     if (a < 26) return 65 + a;
@@ -63,7 +89,7 @@ char web_server::http_request::single_to_base64(const uint8_t a, const bool isPa
     return 0;
 }
 
-std::string web_server::http_request::tripple_to_base64(const char b0, const char b1, const char b2, const int count) {
+std::string web_server::http_request::tripple_to_base64(const uint8_t b0, const uint8_t b1, const uint8_t b2, const int count) {
     std::string result;
     
     if (count != 0) {
@@ -108,5 +134,13 @@ std::string web_server::http_request::string_to_base64(const std::string& input)
     result += tripple_to_base64(found[0], found[1], found[2], count);
     
     return result;
+}
+
+std::string web_server::http_request::websocket_response_key(const std::string& key) {
+    std::string guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    std::string combined = key + guid;
+    uint8_t key_buffer[20];
+    SHA1(reinterpret_cast<const uint8_t*>(combined.c_str()), combined.length(), key_buffer);
+    return string_to_base64(std::string(reinterpret_cast<const char*>(key_buffer), 20));
 }
 

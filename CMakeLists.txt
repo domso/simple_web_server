@@ -22,4 +22,3 @@ target_link_libraries(web_server ${OPENSSL_LIBRARIES})
 add_executable(test examples/main.cpp)
 target_link_libraries(test web_server)
 
-
