@@ -21,5 +21,7 @@ namespace web_server {
         bool enable_log_warning = true;
         std::string log_error = "[ERROR]";
         bool enable_log_error = true;
+        
+        size_t num_worker = 4;
     };
 }

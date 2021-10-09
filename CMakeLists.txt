@@ -9,7 +9,6 @@ find_package(OpenSSL REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -std=c++17 -pthread")
 
 add_library(web_server SHARED
-    web_server/connection_thread.cpp 
     web_server/http_parser.cpp 
     web_server/http_request.cpp 
     web_server/http_status_code.cpp 

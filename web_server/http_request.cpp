@@ -31,7 +31,7 @@ std::pair<std::vector<char>, int> web_server::http_request::execute_callback(con
             responseFields["Upgrade"] = trim_string(requestFields.at("Upgrade"));
         }
         if (requestFields.count("Connection") > 0) {
-            responseFields["Connection"] = ", " + trim_string(requestFields.at("Connection"));
+            responseFields["Connection"] += ", " + trim_string(requestFields.at("Connection"));
         }
         
         responseFields["Sec-WebSocket-Accept"] = websocket_response_key(trim_string(requestFields.at("Sec-WebSocket-Key")));
