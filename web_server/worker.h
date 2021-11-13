@@ -5,6 +5,9 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <unordered_map>
+#include <memory>
+#include <type_traits>
 
 #include "network/socket_container.h"
 
@@ -12,16 +15,11 @@ namespace web_server {
     template<typename skt_T, typename arg_T>
     class worker {
     public:
-        worker(std::function<network::wait_ops(skt_T&, arg_T&)> call, const size_t poll_timeout, const size_t poll_buffer_size) : m_sockets(poll_buffer_size) {            
-            m_running = true;
+        worker(std::function<network::wait_ops(skt_T&, std::shared_ptr<arg_T>&)> call, const size_t poll_timeout, const size_t poll_buffer_size) : m_running(true), m_current_id(1), m_sockets(poll_buffer_size){            
             m_thread = std::thread([call, poll_timeout, this]() {                            
                 while(m_running.load(std::memory_order_relaxed)) {
                     clear_backlog();
-                    
-                    if (on_interrupt) {
-                        on_interrupt();
-                    }
-                    
+
                     m_sockets.wait([&](item& c) {
                         return call(c.skt, c.arg);
                     }, poll_timeout);
@@ -38,12 +36,7 @@ namespace web_server {
                 m_thread.join();
             }
         }
-        
-/*        worker(const worker&) = delete;
-        worker(const worker&&) = delete;
-        void operator=(const worker&) = delete;
-        void operator=(const worker&&) = delete;       */    
-        
+                
         void add_socket(skt_T&& skt) {
             {
                 std::lock_guard<std::mutex> lg(m_mutex);
@@ -51,8 +44,8 @@ namespace web_server {
             }
             
             m_sockets.interrupt();
-        }        
-        
+        }
+                
         bool running() const {
             return m_running.load(std::memory_order_relaxed);
         }
@@ -61,31 +54,45 @@ namespace web_server {
             m_running = false;
             m_sockets.interrupt();
         }
-        
-        std::function<void()> on_interrupt;
-        void interrupt() {
-            m_sockets.interrupt();
-        }
     private:   
         void clear_backlog() {
             std::lock_guard<std::mutex> lg(m_mutex);
             
             for (auto& skt : m_backlog) {
-                item new_item(std::move(skt));
+                item new_item(std::move(skt), m_current_id++);
                 m_sockets.add_socket(std::move(new_item));
             }
             
             m_backlog.clear();
-        }        
+        }
         
         struct item { 
-            item(skt_T&& s) : skt(std::move(s)) {}
+            item(skt_T&& s, uint64_t id) : skt(std::move(s)) {
+                if constexpr (!std::is_same<arg_T, void>::value) {
+                    arg = std::make_shared<arg_T>();
+                    arg->id = id;                    
+                }                
+            }
             
             skt_T skt;
-            arg_T arg;
+            std::shared_ptr<arg_T> arg;
             
             int get_socket() {
                 return skt.get_socket();
+            }
+            
+            uint64_t get_id() {
+                if constexpr (!std::is_same<arg_T, void>::value) {
+                    return arg->id;
+                }
+                
+                return 0;
+            }
+            
+            void close() {
+                if constexpr (!std::is_same<arg_T, void>::value) {
+                    arg->valid = false;
+                }               
             }
         };        
                 
@@ -93,6 +100,7 @@ namespace web_server {
         std::mutex m_mutex;
         std::thread m_thread;   
         std::vector<skt_T> m_backlog;
+        uint64_t m_current_id;
         
         network::socket_container<item> m_sockets;
     };

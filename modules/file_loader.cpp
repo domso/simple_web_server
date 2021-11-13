@@ -1,15 +1,10 @@
 #include "file_loader.h"
 
-#include <iostream>
-
-bool web_server::modules::file_loader::init() {                
-    return true;
-}
-
-std::pair<std::vector<char>, int> web_server::modules::file_loader::handle(const std::string& res, const config& current_config) {        
+std::pair<std::vector<char>, int> web_server::modules::file_loader::handle(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
     return load_file(res, current_config);
 }
-    int web_server::modules::file_loader::hex_to_int(char c) {
+
+int web_server::modules::file_loader::hex_to_int(const char c) {
     if (c < 65) {
         return c - 48;
     } else if (c < 97) {
@@ -50,6 +45,10 @@ std::string web_server::modules::file_loader::filter_filename(const std::string&
     std::string result = filename;
         
     if (result.find("..") != std::string::npos) {
+        result = "";
+    }
+    
+    if (result.find("~/") != std::string::npos) {
         result = "";
     }
     

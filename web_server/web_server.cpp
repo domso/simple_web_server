@@ -9,8 +9,10 @@
 #include "network/status.h"
 #include "http_parser.h"
 #include "http_request.h"
-#include "web_socket/frame_encoder.h"
+#include "shared_context.h"
 
+web_server::web_server::web_server() : m_requester(m_context) {
+}
 
 bool web_server::web_server::init(config newConfig) {
     m_context.currentConfig = newConfig;
@@ -28,26 +30,22 @@ bool web_server::web_server::init(config newConfig) {
 bool web_server::web_server::run() {
     log_status("Start server");
     signal(SIGPIPE, SIG_IGN);
-    
-    std::vector<std::unique_ptr<worker<network::ssl_connection<network::ipv4_addr>, unique_context>>> http_workers;
-    
+        
     //FIXME configure number of threads and timeouts
     for (size_t i = 0; i < m_context.currentConfig.num_worker; i++) {
-        http_workers.push_back(std::make_unique<worker<network::ssl_connection<network::ipv4_addr>, unique_context>>([&](network::ssl_connection<network::ipv4_addr>& conn, unique_context& context){   
-            if (context.is_websocket) {
-                return websocket_handler(conn, context);
+        m_http_workers.push_back(std::make_unique<worker<network::ssl_connection<network::ipv4_addr>, ::web_server::unique_context>>([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context){               
+            if (context->is_native) {
+                return native_handler(conn, context);
             } else {
                 return http_handler(conn, context);                        
             }
         }, 1000, 10));
     }
     
-    
-    
     //FIXME add load balancer
     //should not only give connections to worker 0
-    worker<network::ssl_connection<network::ipv4_addr>, int> accept_worker([&](network::ssl_connection<network::ipv4_addr>& conn, int&){   
-       return accept_handler(conn, *http_workers[0]);        
+    worker<network::ssl_connection<network::ipv4_addr>, void> accept_worker([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void>&){   
+       return accept_handler(conn, *m_http_workers[0]);        
     }, 1000, 10);   
     
     while (true) {
@@ -66,7 +64,7 @@ bool web_server::web_server::run() {
     return true;
 }
 
-network::wait_ops web_server::web_server::accept_handler(network::ssl_connection<network::ipv4_addr>& conn, worker<network::ssl_connection<network::ipv4_addr>, web_server::web_server::unique_context>& connection_worker) {
+network::wait_ops web_server::web_server::accept_handler(network::ssl_connection<network::ipv4_addr>& conn, worker<network::ssl_connection<network::ipv4_addr>, ::web_server::unique_context>& connection_worker) {
     auto [status, code] = conn.accept();
     
     switch (status) {
@@ -82,7 +80,7 @@ network::wait_ops web_server::web_server::accept_handler(network::ssl_connection
     }            
 }
 
-network::wait_ops web_server::web_server::http_handler(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {    
+network::wait_ops web_server::web_server::http_handler(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {    
     if (auto result = http_handler_recv(conn, context)) {
         return *result;
     }
@@ -96,29 +94,30 @@ network::wait_ops web_server::web_server::http_handler(network::ssl_connection<n
     return network::wait_ops::wait_read_write;
 }
 
-std::optional<network::wait_ops> web_server::web_server::http_handler_recv(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {
-    if (context.response_header.empty() && context.response_data.empty()) {        
-        auto [status, code] = conn.recv_pkt(context.recv_buffer);        
+std::optional<network::wait_ops> web_server::web_server::http_handler_recv(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {
+    if (context->response_header.empty() && context->response_data.empty()) {        
+        auto [status, code] = conn.recv_pkt(context->recv_buffer);        
         switch (status) {
             case network::status::ok: { 
-                auto read_region = context.recv_buffer.readable_region();
+                auto read_region = context->recv_buffer.readable_region();
                 
                 for (size_t i = 3; i < read_region.size(); i++) {
                     if (read_region.data()[i - 0] == '\n' &&
                         read_region.data()[i - 1] == '\r' &&
                         read_region.data()[i - 2] == '\n' &&
                         read_region.data()[i - 3] == '\r'                
-                    ) { 
-                        std::string header(reinterpret_cast<char*>(read_region.data()), i + 1);
-                        auto request = http_parser::parse_request(header);
-                        auto response = http_request::handle_request(request, m_context);
+                    ) {                         
+                        std::string header = read_region.splice(0, i + 1).export_to<std::string>();
                         
-                        context.response_header = build_response(response.first);
-                        context.response_data = std::move(response.second);                        
-                        context.recv_buffer.read(read_region.splice(0, i + 1));
+                        auto request = http_parser::parse_request(header);
+                        auto response = m_requester.handle_request(request);
+                        
+                        context->response_header = build_response(response.first);
+                        context->response_data = std::move(response.second);                        
+                        context->recv_buffer.read(read_region.splice(0, i + 1));
                         
                         if (response.first["STATUS"] == "101 Switching Protocols") {
-                            context.is_websocket = true;
+                            context->is_native = true;
                         }
                     }
                 }
@@ -138,16 +137,16 @@ std::optional<network::wait_ops> web_server::web_server::http_handler_recv(netwo
     return std::nullopt;
 }
 
-std::optional<network::wait_ops> web_server::web_server::http_handler_send_header(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {
-    if (!context.response_header.empty()) {        
+std::optional<network::wait_ops> web_server::web_server::http_handler_send_header(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {
+    if (!context->response_header.empty()) {        
         network::memory_region region;
-        region.use(context.response_header);
+        region.use(context->response_header);
         
         auto [status, code] = conn.send_data(region);
         
         switch (status) {
             case network::status::ok: {
-                context.response_header.clear();
+                context->response_header.clear();
                 break;
             }
             case network::status::retry_read: {
@@ -165,16 +164,16 @@ std::optional<network::wait_ops> web_server::web_server::http_handler_send_heade
     return std::nullopt;
 }
 
-std::optional<network::wait_ops> web_server::web_server::http_handler_send_data(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {
-    if (!context.response_data.empty()) {       
+std::optional<network::wait_ops> web_server::web_server::http_handler_send_data(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {
+    if (!context->response_data.empty()) {       
         network::memory_region region;
-        region.use(context.response_data);
+        region.use(context->response_data);
         
         auto [status, code] = conn.send_data(region);
         
         switch (status) {
             case network::status::ok: {
-                context.response_data.clear();
+                context->response_data.clear();
                 break;
             }
             case network::status::retry_read: {
@@ -192,8 +191,8 @@ std::optional<network::wait_ops> web_server::web_server::http_handler_send_data(
     return std::nullopt;
 }
 
-network::wait_ops web_server::web_server::websocket_handler(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {
-    if (auto result = websocket_recv(conn, context)) {
+network::wait_ops web_server::web_server::native_handler(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {
+    if (auto result = native_recv(conn, context)) {
         return *result;
     }    
         
@@ -204,29 +203,11 @@ network::wait_ops web_server::web_server::websocket_handler(network::ssl_connect
     return network::wait_ops::wait_read_write;
 }
 
-std::optional<network::wait_ops> web_server::web_server::websocket_recv(network::ssl_connection<network::ipv4_addr>& conn, web_server::web_server::unique_context& context) {   
-    if (context.response_data.empty()) {
-        auto [status, code] = conn.recv_pkt(context.recv_buffer);        
+std::optional<network::wait_ops> web_server::web_server::native_recv(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {   
+    if (context->response_data.empty()) {
+        auto [status, code] = conn.recv_pkt(context->recv_buffer);        
         switch (status) {
             case network::status::ok: { 
-                auto read_region = context.recv_buffer.readable_region();
-                                
-                auto n = context.frame_decoder.unpack_data(read_region, [&](const network::memory_region region, const uint8_t header) {                    
-                    region.push_back_into(context.recv_data);
-                    
-                    if ((header & 128) > 0) {                                         
-                        std::string response = "hello world";
-                        network::memory_region response_region;
-                        response_region.use(response);
-                        context.frame_encoder.pack_data(response_region, [&](const network::memory_region region) {
-                            region.push_back_into(context.response_data);
-                        });
-                                                
-                        context.recv_data.clear();
-                    }                    
-                });
-                
-                context.recv_buffer.read(read_region.splice(0, n));
 
                 break;
             }
@@ -243,7 +224,6 @@ std::optional<network::wait_ops> web_server::web_server::websocket_recv(network:
     
     return std::nullopt;
 }
-
 
 std::string web_server::web_server::build_response(const std::unordered_map<std::string, std::string>& fieldMap) const {        
     std::string result;    

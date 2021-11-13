@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <vector>
+#include <array>
 #include <stdint.h>
 
 #include "network/memory_region.h"
@@ -10,7 +10,7 @@ namespace web_server {
     namespace web_socket {
         class frame_encoder {
         public:              
-            frame_encoder(const size_t max_fragment_size) : m_max_fragment_size(max_fragment_size), m_frame_data(14) {};
+            frame_encoder(const size_t max_fragment_size) : m_max_fragment_size(max_fragment_size) {};
             
             void pack_data(
                 const network::memory_region region,
@@ -58,7 +58,7 @@ namespace web_server {
             }        
             
             size_t m_max_fragment_size;
-            std::vector<uint8_t> m_frame_data;
+            std::array<uint8_t, 14> m_frame_data;
         };
     }
 }
