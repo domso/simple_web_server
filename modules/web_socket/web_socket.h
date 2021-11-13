@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "../../web_server/config.h"
-#include "../../web_server/shared_context.h"
 #include "../../util/base64.h"
 
 #include "openssl/sha.h"

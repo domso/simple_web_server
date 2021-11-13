@@ -9,13 +9,12 @@
 #include "network/ssl_context.h"
 #include "network/ssl_connection.h"
 #include "network/pkt_buffer.h"
-#include "shared_context.h"
 #include "config.h"
 #include "worker.h"
 #include "network/wait_ops.h"
 
-#include "shared_context.h"
 #include "http_request.h"
+#include "unique_context.h"
 
 namespace web_server {
 
@@ -25,14 +24,7 @@ public:
     
     template <typename T>
     void register_module(T& mod, const std::string& name = "/", const std::string& username = "", const std::string& password = "") {    
-        module_context newModule;
-        newModule.name = name;
-        newModule.callback = [&mod](const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string& res, const config& current_config) {
-            return mod.handle(request, response, res, current_config);
-        };
-        newModule.authentication = {username, password};
-        
-        m_context.moduleMap[name] = newModule;
+        m_requester.register_module<T>(mod, name, username, password);
         log_status("Loaded module '" + std::string(name) + "'");
     }
 
@@ -60,7 +52,7 @@ private:
     
     network::tcp_socket<network::ipv4_addr> m_socket;
     network::ssl_context<network::ipv4_addr> m_sslContext;
-    shared_context m_context;
+    config m_config;
     http_request m_requester;
     size_t current_selected_worker = 0;
 };

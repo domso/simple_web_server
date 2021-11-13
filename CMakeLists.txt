@@ -13,6 +13,8 @@ add_library(web_server SHARED
     web_server/http_request.cpp 
     web_server/http_status_code.cpp 
     web_server/web_server.cpp
+    web_server/native_interface.cpp
+    web_server/native_handle.cpp
     modules/file_loader.cpp
 )
 

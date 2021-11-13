@@ -9,13 +9,11 @@
 #include "network/status.h"
 #include "http_parser.h"
 #include "http_request.h"
-#include "shared_context.h"
 
-web_server::web_server::web_server() : m_requester(m_context) {
-}
+web_server::web_server::web_server() : m_requester(m_config) {}
 
 bool web_server::web_server::init(config newConfig) {
-    m_context.currentConfig = newConfig;
+    m_config = newConfig;
     
     log_status("Initiate server");
     m_socket.accept_on(newConfig.port, newConfig.max_pending);
@@ -32,7 +30,7 @@ bool web_server::web_server::run() {
     signal(SIGPIPE, SIG_IGN);
         
     //FIXME configure number of threads and timeouts
-    for (size_t i = 0; i < m_context.currentConfig.num_worker; i++) {
+    for (size_t i = 0; i < m_config.num_worker; i++) {
         m_http_workers.push_back(std::make_unique<worker<network::ssl_connection<network::ipv4_addr>, ::web_server::unique_context>>([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context){               
             if (context->is_native) {
                 return native_handler(conn, context);
@@ -192,6 +190,10 @@ std::optional<network::wait_ops> web_server::web_server::http_handler_send_data(
 }
 
 network::wait_ops web_server::web_server::native_handler(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) {
+    if (context->response_data.empty()) {
+        context->native_caller.push_into(context->response_data);
+    }    
+    
     if (auto result = native_recv(conn, context)) {
         return *result;
     }    
@@ -208,6 +210,15 @@ std::optional<network::wait_ops> web_server::web_server::native_recv(network::ss
         auto [status, code] = conn.recv_pkt(context->recv_buffer);        
         switch (status) {
             case network::status::ok: { 
+                auto read_region = context->recv_buffer.readable_region();
+                
+                if (context->native_caller.on_recv) {
+                    context->native_caller.on_recv(read_region);
+                } else {
+                    log_warning("No receive callback defined for incoming traffic. Discarding data.");
+                }
+                
+                context->recv_buffer.read(read_region);
 
                 break;
             }
@@ -245,19 +256,19 @@ std::string web_server::web_server::build_response(const std::unordered_map<std:
 }
 
 void web_server::web_server::log_status(const std::string& msg) const {
-    if (m_context.currentConfig.enable_log_status) {
-        std::cout << m_context.currentConfig.log_status + " " + msg << std::endl;
+    if (m_config.enable_log_status) {
+        std::cout << m_config.log_status + " " + msg << std::endl;
     }
 }
 
 void web_server::web_server::log_warning(const std::string& msg) const {
-    if (m_context.currentConfig.enable_log_warning) {
-        std::cout << m_context.currentConfig.log_warning + " " + msg << std::endl;
+    if (m_config.enable_log_warning) {
+        std::cout << m_config.log_warning + " " + msg << std::endl;
     }
 }
 
 void web_server::web_server::log_error(const std::string& msg) const {
-    if (m_context.currentConfig.enable_log_error) {
-        std::cout << m_context.currentConfig.log_error + " " + msg << std::endl;
+    if (m_config.enable_log_error) {
+        std::cout << m_config.log_error + " " + msg << std::endl;
     }
 }

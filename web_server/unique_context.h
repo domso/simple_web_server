@@ -6,6 +6,7 @@
 #include <mutex>
 
 #include "network/pkt_buffer.h"
+#include "native_interface.h"
 
 namespace web_server {    
     struct unique_context {
@@ -17,8 +18,7 @@ namespace web_server {
         uint64_t id;
         bool valid = true;
         
-        std::mutex native_mutex;
-        std::vector<std::vector<char>> native_send_data;
+        native_interface native_caller;
     }; 
 }
 

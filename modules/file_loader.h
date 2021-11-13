@@ -11,7 +11,6 @@
 #include <unordered_map>
 
 #include "../web_server/config.h"
-#include "../web_server/shared_context.h"
 
 namespace web_server {
     namespace modules {
