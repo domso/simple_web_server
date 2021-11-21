@@ -1,7 +1,6 @@
-#include "http_status_code.h"
+#include "status_code.h"
 
-web_server::http_status_code::http_status_code() {
-
+web_server::http::status_code::status_code() {
     m_codes = {
         {100, "Continue"},
         {101, "Switching Protocols"},
@@ -71,6 +70,10 @@ web_server::http_status_code::http_status_code() {
     };
 }
 
-const std::string& web_server::http_status_code::get(const int status) {
-    return m_codes[status];
+const std::string& web_server::http::status_code::get(const int status) const {
+    auto find = m_codes.find(status);
+    if (find != m_codes.end()) {
+        return find->second;
+    }
+    return m_invalid_code;
 }

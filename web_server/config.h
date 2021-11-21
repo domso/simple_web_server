@@ -23,5 +23,9 @@ namespace web_server {
         bool enable_log_error = true;
         
         size_t num_worker = 4;
+        size_t worker_poll_timeout = 1000;
+        size_t worker_poll_buffer_size = 10;
+        size_t accept_poll_timeout = 1000;
+        size_t accept_poll_buffer_size = 10;
     };
 }

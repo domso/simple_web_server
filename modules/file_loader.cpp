@@ -1,6 +1,6 @@
 #include "file_loader.h"
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::handle(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
+std::pair<std::vector<char>, int> web_server::modules::file_loader::request_callback(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
     return load_file(res, current_config);
 }
 
@@ -59,21 +59,21 @@ std::string web_server::modules::file_loader::filter_filename(const std::string&
     return result;
 }
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(const std::string& filename, const config& currentConfig) {
+std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(const std::string& filename, const config& current_config) {
     std::pair<std::vector<char>, int> result;
     std::string unescaped_filename = utf8_convert(filter_filename(filename));
     
     result.second = 404;                
     if (unescaped_filename != "") {
-        std::ifstream fileStream(currentConfig.root_dir + unescaped_filename, std::ios::binary);
+        std::ifstream file_stream(current_config.root_dir + unescaped_filename, std::ios::binary);
 
-        if (fileStream.is_open()) {
-            if (fileStream.good()) {
+        if (file_stream.is_open()) {
+            if (file_stream.good()) {
                 // really, this is the most stupid thing ever
                 // if the filename is a directory, the size is wrong...
                 // TODO fix this shit
                 try {
-                    result.first = std::vector<char>(std::istreambuf_iterator<char>(fileStream), std::istreambuf_iterator<char>());
+                    result.first = std::vector<char>(std::istreambuf_iterator<char>(file_stream), std::istreambuf_iterator<char>());
                     result.second = 200;              
                 } catch (const std::exception& e) {
                     
