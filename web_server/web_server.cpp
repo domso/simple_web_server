@@ -68,7 +68,7 @@ void web_server::web_server::start_accept_worker() {
     m_select_worker = 0;
     auto call = [&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void>&){   
         auto id = m_select_worker++;
-        if (id == m_http_workers.size()) {
+        if (m_select_worker == m_http_workers.size()) {
             m_select_worker = 0;
         }
         return m_accept_executor.execute(conn, *m_http_workers[id]);        
