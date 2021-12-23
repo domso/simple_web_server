@@ -3,7 +3,7 @@
 #include <vector>
 #include "assert.h"
 
-#include "frame_decoder.h"
+#include "frame_decoder.h" 
 #include "frame_encoder.h"
 
 web_server::modules::web_socket::web_socket::web_socket(const native::handle& handle) : m_init(true), m_handle(handle) {}
@@ -20,16 +20,21 @@ void web_server::modules::web_socket::web_socket::send(network::memory_region se
     m_handle.interrupt();
 }
 
-void web_server::modules::web_socket::web_socket::set_on_recv(std::function<void(const network::memory_region)> call) {
+void web_server::modules::web_socket::web_socket::set_on_recv(std::function<void(const network::memory_region, web_socket& socket)> call) {
     assert(m_init);
-    m_handle.on_recv() = [call, decoder = frame_decoder(), recv_data = std::vector<char>()] (network::memory_region region) mutable {                            
+    m_handle.on_recv() = [call, decoder = frame_decoder(), recv_data = std::vector<char>(), socket = web_server::modules::web_socket::web_socket(*this)] (network::memory_region region) mutable {                            
         return decoder.unpack_data(region, [&](const network::memory_region region, const uint8_t header) {                    
             region.push_back_into(recv_data);
+            
+            if ((header & 0xF) == 8) {
+                socket.close();
+                return;
+            }
             
             if ((header & 128) > 0) {   
                 network::memory_region decoded_data;
                 decoded_data.use(recv_data);
-                call(decoded_data);
+                call(decoded_data, socket);
                 recv_data.clear();
             }  
         });

@@ -14,7 +14,7 @@ namespace web_server::modules::web_socket {
         
         void send(network::memory_region send_data);
         
-        void set_on_recv(std::function<void(const network::memory_region)> call);                
+        void set_on_recv(std::function<void(const network::memory_region, web_socket& socket)> call);                
         void set_on_close(std::function<void()> call);
         bool is_valid() const;
         void close();

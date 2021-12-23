@@ -92,7 +92,7 @@ namespace util {
                     std::cout << ", ";
                 }
                 first = false;
-                std::cout << c;
+                std::cout << static_cast<int>(c);
             }
             std::cout << "}" << std::endl;
         }

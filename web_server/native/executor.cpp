@@ -42,6 +42,11 @@ std::optional<network::wait_ops> web_server::native::executor::native_recv(netwo
                     util::logger::log_warning("No receive callback defined for incoming traffic. Discarding data.");
                     context->recv_buffer.read(read_region);
                 }                
+                
+                if (!context->is_valid.load(std::memory_order_relaxed)) {
+                    util::logger::log_debug("Close connection to " + context->name);
+                    return network::wait_ops::remove;
+                }
 
                 break;
             }
