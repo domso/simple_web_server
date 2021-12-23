@@ -3,7 +3,7 @@
 #include "openssl/sha.h"
 #include "util/base64.h"
 
-std::pair<std::vector<char>, int> web_server::modules::web_socket::accept::request_callback(const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string&, const config&) const {
+void web_server::modules::web_socket::accept::request_callback(std::pair<std::vector<char>, int>& result, const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string&, const config&) const {
     if (request.count("Sec-WebSocket-Key") > 0) {
         if (request.count("Upgrade") > 0) {
             response["Upgrade"] = trim_string(request.at("Upgrade"));
@@ -14,10 +14,10 @@ std::pair<std::vector<char>, int> web_server::modules::web_socket::accept::reque
         
         response["Sec-WebSocket-Accept"] = websocket_response_key(trim_string(request.at("Sec-WebSocket-Key")));
         
-        return {{}, 101};
+        result = {{}, 101};
     }
     
-    return {{}, 404};
+    result = {{}, 404};
 }
 
 void web_server::modules::web_socket::accept::native_callback(native::handle& handle) const {

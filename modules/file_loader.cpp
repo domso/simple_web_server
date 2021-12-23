@@ -1,7 +1,7 @@
 #include "file_loader.h"
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::request_callback(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
-    return load_file(res, current_config);
+void web_server::modules::file_loader::request_callback(std::pair<std::vector<char>, int>& result, const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
+    load_file(result, res, current_config);
 }
 
 int web_server::modules::file_loader::hex_to_int(const char c) {
@@ -59,8 +59,7 @@ std::string web_server::modules::file_loader::filter_filename(const std::string&
     return result;
 }
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(const std::string& filename, const config& current_config) {
-    std::pair<std::vector<char>, int> result;
+void web_server::modules::file_loader::load_file(std::pair<std::vector<char>, int>& result, const std::string& filename, const config& current_config) {
     std::string unescaped_filename = utf8_convert(filter_filename(filename));
     
     result.second = 404;                
@@ -81,6 +80,4 @@ std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(co
             }
         }
     }
-
-    return result;
 }
