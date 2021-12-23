@@ -29,8 +29,8 @@ namespace web_server::http {
         void register_module(T& mod, const std::string& name = "/", const std::string& username = "", const std::string& password = "") {    
             internal_module new_module;
             new_module.name = name;
-            new_module.request_callback = [&mod](std::pair<std::vector<char>, int>& result, const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string& res, const config& current_config) {
-                mod.request_callback(result, request, response, res, current_config);
+            new_module.request_callback = [&mod](const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string& res, const config& current_config) {
+                return mod.request_callback(request, response, res, current_config);
             };
             new_module.authentication = {username, password};
             
@@ -41,8 +41,8 @@ namespace web_server::http {
         void register_module(T& mod, const std::string& name = "/", const std::string& username = "", const std::string& password = "") {    
             internal_module new_module;
             new_module.name = name;
-            new_module.request_callback = [&mod](std::pair<std::vector<char>, int>& result, const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string& res, const config& current_config) {
-                mod.request_callback(result, request, response, res, current_config);
+            new_module.request_callback = [&mod](const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string& res, const config& current_config) {
+                return mod.request_callback(request, response, res, current_config);
             };
             new_module.native_callback = [&mod](native::handle& handle) {
                 mod.native_callback(handle);
@@ -59,7 +59,7 @@ namespace web_server::http {
         struct internal_module {
             std::string name;
             std::pair<std::string, std::string> authentication;
-            std::function<void(std::pair<std::vector<char>, int>&, const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string&, const config&)> request_callback;
+            std::function<std::pair<std::vector<char>, int>(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string&, const config&)> request_callback;
             std::function<void(native::handle&)> native_callback;
         };
         

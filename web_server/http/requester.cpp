@@ -35,13 +35,13 @@ std::pair<std::vector<char>, int> web_server::http::requester::execute_callback(
         const internal_module& current_module = search->second;
             
         if (current_module.authentication.first == "") {
-            current_module.request_callback(result, request_fields, response_fields, requested_resource, m_current_config);
+            result = current_module.request_callback(request_fields, response_fields, requested_resource, m_current_config);
         } else {
             if (request_fields.count("Authorization") == 0 || request_fields.at("Authorization") != " Basic " + util::base64::convert_string(current_module.authentication.first + ":" + current_module.authentication.second) + "\r\n") {                
                 response_fields["WWW-Authenticate"] = "Basic realm=\"" + current_module.name + "\"";
                 result.second = 401;
             } else {    
-                current_module.request_callback(result, request_fields, response_fields, requested_resource, m_current_config);                            
+                result = current_module.request_callback(request_fields, response_fields, requested_resource, m_current_config);                            
             }
         }        
             

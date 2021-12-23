@@ -37,11 +37,11 @@ int main(int argc, char **argv) {
     };   
     
     web_server::web_server server;
-    server.register_module(file_loader, "/", "asd", "dfgh");
+    server.register_module(file_loader, "/", "asd", "dfgh<");
 //     server.register_module(file_loader, "/webgl");
 //     server.register_module(file_loader, "/bos_hat");
 //     server.register_module(file_loader, "/console");
-//     server.register_module(web_socket_accept, "/ws");
+    server.register_module(web_socket_accept, "/ws", "asd", "dfgh<");
     
     web_server::config config;
     config.port = 6580;
