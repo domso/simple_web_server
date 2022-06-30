@@ -1,5 +1,6 @@
 #include "requester.h"
 
+#include "util/logger.h"
 #include "util/base64.h"
 
 web_server::http::requester::requester(config& current_config) : m_current_config(current_config) {}
@@ -25,6 +26,9 @@ std::pair<std::vector<char>, int> web_server::http::requester::execute_callback(
     std::pair<std::vector<char>, int> result;
     
     result.second = 404;
+
+    util::logger::log_debug("Requested module" + requested_module);
+
     auto search = m_module_map.find(requested_module);    
     if (search == m_module_map.end()) {
         search = m_module_map.find("/");          

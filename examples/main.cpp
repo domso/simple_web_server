@@ -16,6 +16,9 @@ int main(int argc, char **argv) {
         socket.set_on_close([](){
             util::logger::log_debug("Close web socket connection");
         });
+
+
+
     };   
     
     web_server::config config;
