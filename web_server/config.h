@@ -8,6 +8,7 @@ namespace web_server {
         std::string name = "https://github.com/domso/simple_web_server";
         std::string cert = "cert.pem";
         std::string key = "key.pem";
+        std::string password = "test";
         
         uint16_t port = 443;
         int max_pending = 10;

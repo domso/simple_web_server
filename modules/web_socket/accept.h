@@ -13,6 +13,7 @@ namespace web_server::modules::web_socket {
     public:
         std::pair<std::vector<char>, int> request_callback(const std::unordered_map<std::string, std::string>& request, std::unordered_map<std::string, std::string>& response, const std::string&, const config&) const;                
         void native_callback(native::handle& handle) const;
+        static constexpr const auto name = "websocket";
         
         std::function<void(web_socket& skt)> on_new_socket;
     private:

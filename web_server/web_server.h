@@ -10,7 +10,6 @@
 #include "worker.h"
 
 #include "unique_context.h"
-#include "util/logger.h"
 #include "ssl_accept/executor.h"
 #include "http/executor.h"
 #include "native/executor.h"
@@ -24,7 +23,6 @@ public:
     template <typename T>
     void register_module(T& mod, const std::string& name = "/", const std::string& username = "", const std::string& password = "") {    
         m_http_executor.register_module<T>(mod, name, username, password);
-        util::logger::log_status("Loaded module '" + std::string(name) + "'");
     }
 
     bool init(config new_config = config());

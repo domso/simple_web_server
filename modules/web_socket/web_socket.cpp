@@ -20,7 +20,7 @@ void web_server::modules::web_socket::web_socket::send(network::memory_region se
     m_handle.interrupt();
 }
 
-void web_server::modules::web_socket::web_socket::set_on_recv(std::function<void(const network::memory_region, web_socket& socket)> call) {
+void web_server::modules::web_socket::web_socket::set_on_recv_byte(std::function<void(const network::memory_region, web_socket& socket)> call) {
     assert(m_init);
     m_handle.on_recv() = [call, decoder = frame_decoder(), recv_data = std::vector<char>(), socket = web_server::modules::web_socket::web_socket(*this)] (network::memory_region region) mutable {                            
         return decoder.unpack_data(region, [&](const network::memory_region region, const uint8_t header) {                    

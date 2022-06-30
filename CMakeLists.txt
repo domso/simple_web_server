@@ -7,7 +7,7 @@ include_directories(/usr/include/openssl)
 include_directories(${OPENSSL_INCLUDE_DIR})
 find_package(OpenSSL REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -std=c++2a -pthread -fconcepts")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FALGS} -O3 -std=c++20 -pthread -fconcepts")
 
 add_library(web_server SHARED
     util/base64.cpp
@@ -36,4 +36,3 @@ target_link_libraries(web_server ${OPENSSL_LIBRARIES})
 
 add_executable(test examples/main.cpp)
 target_link_libraries(test web_server)
-

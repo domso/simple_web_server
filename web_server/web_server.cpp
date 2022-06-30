@@ -17,9 +17,12 @@ bool web_server::web_server::init(config new_config) {
     m_config = new_config;
     
     util::logger::log_status("Initiate server");
-    m_socket.accept_on(new_config.port, new_config.max_pending);
-    if (!m_ssl_context.init(new_config.cert, new_config.key)) {
-        util::logger::log_error("Could not load server");
+    if (!m_socket.accept_on(new_config.port, new_config.max_pending)) {
+        util::logger::log_error("Could not open socket");
+        return false;
+    }
+    if (!m_ssl_context.init(new_config.cert, new_config.key, new_config.password)) {
+        util::logger::log_error("Could not open credentials");
         return false;
     }
     

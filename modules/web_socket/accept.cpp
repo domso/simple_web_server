@@ -40,7 +40,7 @@ std::string web_server::modules::web_socket::accept::websocket_response_key(cons
     std::string combined = key + guid;
     uint8_t key_buffer[20];
     SHA1(reinterpret_cast<const uint8_t*>(combined.c_str()), combined.length(), key_buffer);
-    return util::base64::convert_string(std::string(reinterpret_cast<const char*>(key_buffer), 20));
+    return util::base64::to_base64(std::string(reinterpret_cast<const char*>(key_buffer), 20));
 }   
 
 

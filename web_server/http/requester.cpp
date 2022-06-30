@@ -25,7 +25,6 @@ std::pair<std::vector<char>, int> web_server::http::requester::execute_callback(
     std::pair<std::vector<char>, int> result;
     
     result.second = 404;
-
     auto search = m_module_map.find(requested_module);    
     if (search == m_module_map.end()) {
         search = m_module_map.find("/");          
@@ -37,7 +36,7 @@ std::pair<std::vector<char>, int> web_server::http::requester::execute_callback(
         if (current_module.authentication.first == "") {
             result = current_module.request_callback(request_fields, response_fields, requested_resource, m_current_config);
         } else {
-            if (request_fields.count("Authorization") == 0 || request_fields.at("Authorization") != " Basic " + util::base64::convert_string(current_module.authentication.first + ":" + current_module.authentication.second) + "\r\n") {                
+            if (request_fields.count("Authorization") == 0 || request_fields.at("Authorization") != " Basic " + util::base64::to_base64(current_module.authentication.first + ":" + current_module.authentication.second) + "\r\n") {                
                 response_fields["WWW-Authenticate"] = "Basic realm=\"" + current_module.name + "\"";
                 result.second = 401;
             } else {    

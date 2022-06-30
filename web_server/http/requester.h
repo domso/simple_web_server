@@ -7,6 +7,7 @@
 #include <memory>
 #include <type_traits>
 
+#include "util/logger.h"
 #include "web_server/config.h"
 #include "web_server/unique_context.h"
 #include "web_server/native/handle.h"
@@ -15,8 +16,8 @@
 
 namespace web_server::http {       
     template<typename T>
-    concept has_native_support = requires (T t) {
-        t.native_callback;
+    concept has_native_support = requires (T t, native::handle& handle) {
+        t.native_callback(handle);
     };
         
     class requester {
@@ -26,6 +27,7 @@ namespace web_server::http {
         handle_request(const std::unordered_map<std::string, std::string>& request_fields, const std::shared_ptr<unique_context>& context) const;
         
         template <typename T>
+            requires (!has_native_support<T>)
         void register_module(T& mod, const std::string& name = "/", const std::string& username = "", const std::string& password = "") {    
             internal_module new_module;
             new_module.name = name;
@@ -35,6 +37,7 @@ namespace web_server::http {
             new_module.authentication = {username, password};
             
             m_module_map[name] = new_module;
+            util::logger::log_status("Loaded HTTP module '" + std::string(T::name) + "' on '" + std::string(name) + "'");
         }    
             
         template <has_native_support T>
@@ -51,6 +54,7 @@ namespace web_server::http {
             new_module.authentication = {username, password};
             
             m_module_map[name] = new_module;
+            util::logger::log_status("Loaded native module '" + std::string(T::name) + "' on '" + std::string(name) + "'");
         }   
     private:    
         std::pair<std::vector<char>, int> execute_callback(const std::unordered_map<std::string, std::string>& request_fields, std::unordered_map<std::string, std::string>& response_fields, const std::shared_ptr<unique_context>& context) const;    
