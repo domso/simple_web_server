@@ -59,6 +59,7 @@ namespace web_server::http {
     private:    
         std::pair<std::vector<char>, int> execute_callback(const std::unordered_map<std::string, std::string>& request_fields, std::unordered_map<std::string, std::string>& response_fields, const std::shared_ptr<unique_context>& context) const;    
         std::string get_module(const std::string& ressource) const;
+        std::unordered_map<std::string, std::string> insert_url_params(const std::unordered_map<std::string, std::string>& request_fields, const std::string& url) const;
             
         struct internal_module {
             std::string name;
