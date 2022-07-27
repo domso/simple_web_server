@@ -98,6 +98,9 @@ std::unordered_map<std::string, std::string> web_server::http::requester::insert
 
                     if (ptr == pattern.length()) {
                         result[url.substr(matches[0].first, matches[0].second)] = url.substr(matches[1].first, matches[1].second);
+                        matches[0] = {current + 1, 0};
+                        matches[1] = {0, 0};
+                        ptr = 0;
                     } else {
                         matches[ptr] = {current + 1, 0};
                     }
@@ -108,9 +111,10 @@ std::unordered_map<std::string, std::string> web_server::http::requester::insert
 
             current++;
         }
-        result[url.substr(matches[0].first, matches[0].second)] = url.substr(matches[1].first, matches[1].second);
+        if (ptr == 1 && matches[0].first < url.length() && matches[1].first < url.length()) {
+            result[url.substr(matches[0].first, matches[0].second)] = url.substr(matches[1].first, matches[1].second);
+        }
     }
-    
 
     return result;
 }

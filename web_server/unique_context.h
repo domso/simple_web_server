@@ -16,7 +16,7 @@ namespace web_server {
         ~unique_context() {
             util::logger::log_debug("Delete context of " + name);            
         }
-        network::pkt_buffer recv_buffer = {1024};
+        network::pkt_buffer recv_buffer = {1024 * 16};
         std::string response_header;
         std::vector<char> response_data;
         std::vector<char> recv_data;
