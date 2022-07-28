@@ -33,6 +33,7 @@ namespace util {
             m_enable_log_error = cnf.enable_log_error;
             m_enable_log_warning = cnf.enable_log_warning;
             m_enable_log_status = cnf.enable_log_status;
+            m_enable_log_debug = cnf.enable_log_debug;
         }
         
         template<typename T>
@@ -58,7 +59,7 @@ namespace util {
 
         template<typename T>
         static void log_debug(const T& msg) {
-            if (m_enable_log_error) {
+            if (m_enable_log_debug) {
                 print_as_string<T>(current_date() + " \033[36m[DEBUG]\033[0m ", msg);
             }
         }
@@ -66,6 +67,7 @@ namespace util {
         static bool m_enable_log_status;
         static bool m_enable_log_warning;
         static bool m_enable_log_error;
+        static bool m_enable_log_debug;
         static std::mutex m_logger_mutex;
         
         static std::string current_date() {

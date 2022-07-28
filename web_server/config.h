@@ -22,6 +22,7 @@ namespace web_server {
         bool enable_log_warning = true;
         std::string log_error = "[ERROR]";
         bool enable_log_error = true;
+        bool enable_log_debug = true;
         
         size_t num_worker = 4;
         size_t worker_poll_timeout = 1000;

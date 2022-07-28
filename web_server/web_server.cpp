@@ -33,12 +33,13 @@ bool web_server::web_server::run() {
     util::logger::log_status("Start server");
     signal(SIGPIPE, SIG_IGN);
     util::signal_interrupt itr([this](){
+       util::logger::log_status("Interrupt");
        m_socket.close_socket(); 
     });
         
     start_http_worker();
     start_accept_worker();
-    
+
     while (auto tcp_connection = m_socket.accept_connection()) {
         util::logger::log_status("New TCP connection from " + tcp_connection->get_addr().ip() + ":" + std::to_string(tcp_connection->get_addr().port()));
         tcp_connection->set_blocking(false);
