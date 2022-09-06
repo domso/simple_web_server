@@ -3,8 +3,8 @@
 web_server::modules::web_socket::frame_encoder::frame_encoder(const size_t max_fragment_size) : m_max_fragment_size(max_fragment_size) {};
 
 void web_server::modules::web_socket::frame_encoder::pack_data(
-    const network::memory_region region,
-    const std::function<void(const network::memory_region)> callback
+    const network::memory_region_view region,
+    const std::function<void(const network::memory_region_view)> callback
 ) {                
     for (size_t start = 0; start < region.size(); start += m_max_fragment_size) {
         pack_fragment(region.splice(start, m_max_fragment_size), (start + m_max_fragment_size) >= region.size(), callback);                    
@@ -12,9 +12,9 @@ void web_server::modules::web_socket::frame_encoder::pack_data(
 }
 
 void web_server::modules::web_socket::frame_encoder::pack_fragment(
-    const network::memory_region region,
+    const network::memory_region_view region,
     const bool last, 
-    const std::function<void(const network::memory_region)> callback
+    const std::function<void(const network::memory_region_view)> callback
 ) {
     size_t n = region.size();
     const uint8_t* ptr_n = reinterpret_cast<const uint8_t*>(&n);
@@ -43,6 +43,6 @@ void web_server::modules::web_socket::frame_encoder::pack_fragment(
         header_size = 10; 
     }
     
-    callback(network::memory_region(m_frame_data.data(), header_size));
+    callback(network::memory_region_view(m_frame_data.data(), header_size));
     callback(region);    
 }        

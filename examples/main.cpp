@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
     web_socket_accept.on_new_socket = [&](web_server::modules::web_socket::web_socket& socket) {        
         util::logger::log_debug("Open web socket connection");
         
-        socket.set_on_recv_byte([&](const network::memory_region region, web_server::modules::web_socket::web_socket& s) mutable {      
+        socket.set_on_recv_byte([&](const network::memory_region_view region, web_server::modules::web_socket::web_socket& s) mutable {      
             util::logger::log_debug("Received data from web socket connection");
         });
         

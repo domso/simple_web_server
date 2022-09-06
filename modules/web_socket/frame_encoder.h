@@ -12,14 +12,14 @@ namespace web_server::modules::web_socket {
         frame_encoder(const size_t max_fragment_size);
         
         void pack_data(
-            const network::memory_region region,
-            const std::function<void(const network::memory_region)> callback
+            const network::memory_region_view region,
+            const std::function<void(const network::memory_region_view)> callback
         );
     private:   
         void pack_fragment(
-            const network::memory_region region,
+            const network::memory_region_view region,
             const bool last, 
-            const std::function<void(const network::memory_region)> callback
+            const std::function<void(const network::memory_region_view)> callback
         );      
         
         size_t m_max_fragment_size;

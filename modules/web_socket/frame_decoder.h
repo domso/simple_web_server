@@ -11,9 +11,9 @@ namespace web_server::modules::web_socket {
     class frame_decoder {
     public:              
         frame_decoder() {};                
-        size_t unpack_data(const network::memory_region region, const std::function<void(const network::memory_region, const uint8_t)> callback) const;
+        size_t unpack_data(const network::memory_region region, const std::function<void(const network::memory_region_view, const uint8_t)> callback) const;
     private:   
-        void mask_data(network::memory_region data_region, const network::memory_region mask_region) const;        
+        void mask_data(network::memory_region data_region, const network::memory_region_view mask_region) const;        
     };
 }
 

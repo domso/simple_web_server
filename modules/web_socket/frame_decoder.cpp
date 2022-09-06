@@ -2,7 +2,7 @@
 
 size_t web_server::modules::web_socket::frame_decoder::unpack_data(
     const network::memory_region region,
-    const std::function<void(const network::memory_region, const uint8_t)> callback
+    const std::function<void(const network::memory_region_view, const uint8_t)> callback
 ) const {  
     if (region.size() < 2) {
         return 0;
@@ -43,7 +43,7 @@ size_t web_server::modules::web_socket::frame_decoder::unpack_data(
         return 0;
     }
 }
-void web_server::modules::web_socket::frame_decoder::mask_data(network::memory_region data_region, const network::memory_region mask_region) const {
+void web_server::modules::web_socket::frame_decoder::mask_data(network::memory_region data_region, const network::memory_region_view mask_region) const {
     if (!data_region.overlap(mask_region)) {
         int mode = 0;
         
