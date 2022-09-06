@@ -26,11 +26,9 @@ int main(int argc, char **argv) {
     util::logger::init(config);
 
     web_server::web_server server;
-    server.register_module(file_loader, "/");
-    server.register_module(web_socket_accept, "/ws");
-    
+
     if (server.init(config)) {    
-        server.run();
+         server.run();
     }
     
     return 0;
