@@ -56,7 +56,10 @@ std::optional<network::wait_ops> web_server::native::executor::native_recv(netwo
             case network::status::retry_write: {
                 return network::wait_ops::wait_write;                    
             }
-            case network::status::error: return network::wait_ops::remove;
+            case network::status::error: {
+                util::logger::log_debug("Close connection to " + context->name + " due to error");
+                return network::wait_ops::remove;
+            }
             default: return network::wait_ops::remove;
         }
     }
@@ -84,6 +87,7 @@ std::optional<network::wait_ops> web_server::native::executor::native_send(netwo
                 return network::wait_ops::wait_write;
             }
             case network::status::error: {
+                util::logger::log_debug("Close connection to " + context->name + " due to error");
                 return network::wait_ops::remove;
             }
         }              

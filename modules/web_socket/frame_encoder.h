@@ -18,6 +18,7 @@ namespace web_server::modules::web_socket {
     private:   
         void pack_fragment(
             const network::memory_region_view region,
+            const bool first, 
             const bool last, 
             const std::function<void(const network::memory_region_view)> callback
         );      

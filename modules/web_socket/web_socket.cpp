@@ -12,7 +12,7 @@ web_server::modules::web_socket::web_socket::web_socket(web_socket&& s) : m_init
 
 void web_server::modules::web_socket::web_socket::send(network::memory_region_view send_data) {
     std::vector<char> encoded_data;
-    frame_encoder encoder = 1024;  
+    frame_encoder encoder = 1024;
     encoder.pack_data(send_data, [&](const network::memory_region_view region) {
         region.push_back_into(encoded_data);
     });
