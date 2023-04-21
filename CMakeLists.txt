@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.6)
 project(web_server)
 
-include_directories(../network/)
 include_directories(./)
 include_directories(/usr/include/openssl)
 include_directories(${OPENSSL_INCLUDE_DIR})
