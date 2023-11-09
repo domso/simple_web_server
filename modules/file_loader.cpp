@@ -1,6 +1,6 @@
 #include "file_loader.h"
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::request_callback(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
+std::pair<std::vector<char>, int> web_server::modules::file_loader::get_callback(const std::unordered_map<std::string, std::string>& header, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
     return load_file(res, current_config);
 }
 

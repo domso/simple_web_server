@@ -44,6 +44,3 @@ private:
     config m_config;
 };
 }
-
-
-

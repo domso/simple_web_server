@@ -28,7 +28,7 @@ namespace network {
         
         template<typename T>
         void use(T* data, const size_t size) {
-            m_data = reinterpret_cast<const uint8_t*>(data);
+            m_data = reinterpret_cast<uint8_t*>(data);
             m_size = size;
         }    
         
@@ -63,6 +63,16 @@ namespace network {
             
             return std::nullopt;
         }    
+
+        template<typename T>
+        std::optional<const T*> at(const size_t n) const {
+            return splice(n * sizeof(T), sizeof(T)).cast_to<T>();
+        }
+
+        template<typename T>
+        std::optional<T*> at(const size_t n) {
+            return splice(n * sizeof(T), sizeof(T)).cast_to<T>();
+        }
 
         template<typename T>
         std::optional<T> convert_to_int() const {
@@ -140,6 +150,10 @@ namespace network {
         
         void move(const memory_region& region) {
             std::memmove(m_data, region.m_data, std::min(m_size, region.size()));
+        }
+
+        void set(const int v) {
+            std::memset(m_data, v, m_size);
         }
         
         template<typename T>

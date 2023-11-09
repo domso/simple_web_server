@@ -2,7 +2,6 @@
 
 #include "network/status.h"
 
-#include "web_server/http/parser.h"
 #include "web_server/http/requester.h"
 #include "util/logger.h"
 
@@ -26,7 +25,7 @@ network::wait_ops web_server::http::executor::execute(network::ssl_connection<ne
 
 std::optional<network::wait_ops> web_server::http::executor::recv_data(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context>& context) const {
     if (context->response_header.empty() && context->response_data.empty()) {        
-        auto [status, code] = conn.recv_pkt(context->recv_buffer);        
+        auto [status, code] = conn.recv_pkt(context->recv_buffer);
         switch (status) {
             case network::status::ok: { 
                 auto read_region = context->recv_buffer.readable_region();
@@ -40,14 +39,15 @@ std::optional<network::wait_ops> web_server::http::executor::recv_data(network::
                     ) {                         
                         std::string header = read_region.splice(0, i + 1).export_to<std::string>();
                         
-                        auto request = parser::parse_request(header);
-                        auto response = m_requester.handle_request(request, context);
+                        auto response = m_requester.handle_request(header, context);
                         
                         context->response_header = build_response(response.first);
                         context->response_data = std::move(response.second);                        
                         context->recv_buffer.read(read_region.splice(0, i + 1));
                     }
                 }
+                // FIXME!
+                context->recv_buffer.read(read_region);
                 break;
             }
             case network::status::retry_read: {

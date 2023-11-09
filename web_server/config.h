@@ -13,7 +13,7 @@ namespace web_server {
         uint16_t port = 443;
         int max_pending = 10;
         
-        std::string root_dir = "../www";
+        std::string root_dir = "../www/";
         bool allow_file_access = true;
         
         std::string log_status = "[STATUS]";

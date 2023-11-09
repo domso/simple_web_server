@@ -15,7 +15,7 @@
 namespace web_server::modules {
     class file_loader {
     public:        
-        std::pair<std::vector<char>, int> request_callback(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config);
+        std::pair<std::vector<char>, int> get_callback(const std::unordered_map<std::string, std::string>&, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config);
         static constexpr const auto name = "filename";
     private:
         int hex_to_int(const char c);
