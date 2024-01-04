@@ -1,35 +1,55 @@
 #pragma once
 
-#include <functional>
+#include <atomic>
+#include <mutex>
+#include <memory>
+
+#include "frame_decoder.h" 
+#include "frame_encoder.h"
 
 #include "network/memory_region.h"
-#include "util/parse_json_to.h"
-#include "web_server/native/handle.h"
+#include "network/memory_region_view.h"
+#include "network/socket_container.h"
 
 namespace web_server::modules::web_socket {
+    struct web_socket_data {
+        frame_encoder encoder = 1024;
+        frame_decoder decoder;
+        std::vector<char> recv_buffer;
+        network::socket_container_notifier notifier;  
+        std::atomic<bool> valid = true;
+
+        std::mutex mutex;
+        std::vector<char> send_buffer;
+    };
+
     class web_socket {
     public:
-        web_socket(const native::handle& handle);              
-        web_socket(const web_socket& s);
-        web_socket(web_socket&& s);
+        void init(network::socket_container_notifier& notifier);
         
-        void send(network::memory_region_view send_data);
-        
-        void set_on_recv_byte(std::function<void(const network::memory_region_view, web_socket&)> call);
-
-        template<typename T>
-            requires util::json_attribute_settable<T>
-        void set_on_recv_json(std::function<void(const T&, web_socket& socket)> call) {
-            set_on_recv_byte([call] (const network::memory_region_view src, web_socket& socket){
-                call(util::parse_json_to<T>(src.export_to<std::string_view>()), socket);
-            });    
+        template<typename Tcall>
+        size_t recv(network::memory_region read_region, const Tcall& call) {
+            return m_internal->decoder.unpack_data(read_region, [&](const network::memory_region_view region, const uint8_t header) {                    
+                region.push_back_into(m_internal->recv_buffer);
+                
+                if ((header & 0xF) == 8) {
+                    close();
+                    return;
+                }
+                
+                if ((header & 128) > 0) {   
+                    network::memory_region_view decoded_data;
+                    decoded_data.use(m_internal->recv_buffer);
+                    call(decoded_data, *this);
+                    m_internal->recv_buffer.clear();
+                }  
+            });
         }
-
-        void set_on_close(std::function<void()> call);
-        bool is_valid() const;
+        void send(network::memory_region_view send_data);
+        void update(std::vector<char>& buffer);
         void close();
-    private:   
-        bool m_init;
-        native::handle m_handle;                  
+        bool status() const;
+    private:
+        std::shared_ptr<web_socket_data> m_internal;
     };
 }

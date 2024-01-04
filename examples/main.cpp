@@ -2,8 +2,9 @@
 #include "modules/file_loader.h"
 #include "modules/web_socket/accept.h"
 
+//#include "web_server/module.h"
+
 int main(int argc, char **argv) {         
-    web_server::modules::file_loader file_loader;
     /*
     web_server::modules::web_socket::accept web_socket_accept;
     
@@ -20,17 +21,22 @@ int main(int argc, char **argv) {
     };   
     */
     
-    web_server::config config;
-    config.port = 6580;
-    util::logger::init(config);
+    //web_server::config config;
+    //config.port = 6580;
+    //util::logger::init(config);
 
-    web_server::web_server server;
+    //web_server::web_server<
+    //    web_server::module::definition<
+    //        web_server::modules::file_loader,
+    //        web_server::module::options<
+    //            web_server::module::path<"/">
+    //        >
+    //    >
+    //> server;
 
-    server.register_module(file_loader, "/");
-
-    if (server.init(config)) {    
-         server.run();
-    }
+    //if (server.init(config)) {    
+    //     server.run();
+    //}
     
     return 0;
 }

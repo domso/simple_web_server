@@ -29,11 +29,11 @@ namespace util {
     class logger {
     public:
         template<typename T>
-        static void init(T& cnf) {
-            m_enable_log_error = cnf.enable_log_error;
-            m_enable_log_warning = cnf.enable_log_warning;
-            m_enable_log_status = cnf.enable_log_status;
-            m_enable_log_debug = cnf.enable_log_debug;
+        static void init() {
+            m_enable_log_error = T::template get_value<"enable_log_error">();
+            m_enable_log_warning = T::template get_value<"enable_log_warning">();
+            m_enable_log_status = T::template get_value<"enable_log_status">();
+            m_enable_log_debug = T::template get_value<"enable_log_debug">();
         }
         
         template<typename T>

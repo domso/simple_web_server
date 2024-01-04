@@ -1,7 +1,7 @@
 #include "file_loader.h"
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::get_callback(const std::unordered_map<std::string, std::string>& header, std::unordered_map<std::string, std::string>&, const std::string& res, const config& current_config) {        
-    return load_file(res, current_config);
+web_server::http::response web_server::modules::file_loader::get_callback(const http::request& request, userdata& local) {
+    return load_file(request.resource);
 }
 
 int web_server::modules::file_loader::hex_to_int(const char c) {
@@ -59,13 +59,13 @@ std::string web_server::modules::file_loader::filter_filename(const std::string&
     return result;
 }
 
-std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(const std::string& filename, const config& current_config) {
-    std::pair<std::vector<char>, int> result;
+web_server::http::response web_server::modules::file_loader::load_file(const std::string& filename) {
+    http::response result;
     std::string unescaped_filename = utf8_convert(filter_filename(filename));
     
-    result.second = 404;                
+    result.code = 404;                
     if (unescaped_filename != "") {
-        std::ifstream file_stream(current_config.root_dir + unescaped_filename, std::ios::binary);
+        std::ifstream file_stream("../www" + unescaped_filename, std::ios::binary);
 
         if (file_stream.is_open()) {
             if (file_stream.good()) {
@@ -73,8 +73,8 @@ std::pair<std::vector<char>, int> web_server::modules::file_loader::load_file(co
                 // if the filename is a directory, the size is wrong...
                 // TODO fix this shit
                 try {
-                    result.first = std::vector<char>(std::istreambuf_iterator<char>(file_stream), std::istreambuf_iterator<char>());
-                    result.second = 200;              
+                    result.data = std::vector<char>(std::istreambuf_iterator<char>(file_stream), std::istreambuf_iterator<char>());
+                    result.code = 200;              
                 } catch (const std::exception& e) {
                     
                 }
