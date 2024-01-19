@@ -104,7 +104,7 @@ namespace network {
         * @return success
         */
         std::optional<network::tcp_connection<IP_ADDR_TYPE>> accept_connection() const {
-            network::tcp_connection<IP_ADDR_TYPE> connection;
+            network::tcp_connection<IP_ADDR_TYPE> connection(0);
             socklen_t clientlen = sizeof(connection.get_addr().internal_handle());
 
             // accept new incoming connection

@@ -27,7 +27,7 @@ namespace web_server::modules::web_socket {
                     response.fields["Upgrade"] = trim_string(request.fields.at("Upgrade"));
                 }
                 if (request.fields.count("Connection") > 0) {
-                    response.fields["Connection"] += ", " + trim_string(request.fields.at("Connection"));
+                    response.fields["Connection"] = trim_string(request.fields.at("Connection"));
                 }
                 
                 response.fields["Sec-WebSocket-Accept"] = websocket_response_key(trim_string(request.fields.at("Sec-WebSocket-Key")));

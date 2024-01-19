@@ -57,7 +57,8 @@ namespace web_server::module {
                     }
 
                     response.fields["Server"] = std::string(T_config::template get_value<"name">().data());
-                    response.fields["Connection"] = "keep-alive";
+                    response.fields["Connection"] += ", keep-alive";
+
                     
                     auto response_header = build_response_header(response);
                     context->response_data.insert(context->response_data.end(), response_header.begin(), response_header.end());

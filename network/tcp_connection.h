@@ -18,7 +18,12 @@ template<typename IP_ADDR_TYPE>
 class tcp_connection : public base_socket<IP_ADDR_TYPE> {
 public:
     tcp_connection() {
-
+        // create new socket
+        this->m_skt = socket(this->m_addr.family(), SOCK_STREAM, 0);
+    }
+    tcp_connection(const int fd) {
+        // create new socket
+        this->m_skt = fd;
     }
     tcp_connection(const tcp_connection& that) = delete;
     tcp_connection(tcp_connection&& conn) : base_socket<IP_ADDR_TYPE>(std::move(conn)) {
@@ -47,8 +52,6 @@ public:
     bool connect_to(const IP_ADDR_TYPE& addr) {
         this->m_addr = addr;
 
-        // create new socket
-        this->m_skt = socket(this->m_addr.family(), SOCK_STREAM, 0);
 
         if (this->m_skt == -1) {
             return false;

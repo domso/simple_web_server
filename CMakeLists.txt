@@ -21,6 +21,14 @@ add_library(web_server SHARED
     modules/web_socket/web_socket.cpp    
 )
 
+add_executable(proxy_sender 
+    util/proxy_sender.cpp
+)
+
+add_executable(proxy_receiver
+    util/proxy_receiver.cpp
+)
+
 target_link_libraries(web_server ${OPENSSL_LIBRARIES})
 
 add_executable(test examples/main.cpp)

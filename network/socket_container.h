@@ -52,6 +52,7 @@ namespace network {
         }
 
         ~socket_container() {
+            update_item_map();
             for (auto& [key, value] : m_item_map) {
                 delete value;
             }
@@ -68,8 +69,11 @@ namespace network {
 
         void add_socket(T&& skt) {
             auto new_skt = new T(std::move(skt));
-            add_fd(new_skt->get_fd(), reinterpret_cast<void*>(new_skt), true);
-            m_item_map.insert({new_skt->get_id(), new_skt});
+            {
+                std::unique_lock ul(m_mutex);
+                add_fd(new_skt->get_fd(), reinterpret_cast<void*>(new_skt), true);
+                m_item_queue.push_back({new_skt->get_id(), new_skt});
+            }
         }
 
         bool wait(std::function<wait_ops(T& skt)> call, const int timeout) {
@@ -123,6 +127,7 @@ namespace network {
                 }
                 case remove: {
                     remove_fd(fd);
+                    update_item_map();
                     m_item_map.erase(skt->get_id());
                     delete skt;
                     break;
@@ -183,11 +188,21 @@ namespace network {
 
         void remove_fd(int fd) {
             int result = epoll_ctl(m_epfd, EPOLL_CTL_DEL, fd, nullptr);
-            assert(result == 0);
+            assert(result == 0 || errno == EBADF);
+        }
+
+        void update_item_map() {
+            std::unique_lock ul(m_mutex);
+            for (auto [k, v] : m_item_queue) {
+                m_item_map.insert({k, v});
+            }
+            m_item_queue.clear();
         }
 
         std::vector<epoll_event> m_events;
         std::unordered_map<uint64_t, T*> m_item_map;
+        std::vector<std::pair<uint64_t, T*>> m_item_queue;
+        std::mutex m_mutex;
 
         int m_epfd;
         std::shared_ptr<socket_container_external_interrupt_context> m_external_interrupt_context;
