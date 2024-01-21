@@ -45,12 +45,12 @@ namespace web_server {
                 default: return network::wait_ops::remove;
             }            
         }
-        network::wait_ops update(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context) {
+        network::wait_ops update(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context, network::socket_container_notifier& notifier) {
             if (context->is_native) {
                 m_mod_adapter.handle_native_update(context->native_module_id, context->response_data, context);
             }
     
-            if (auto result = recv_data(conn, context)) {
+            if (auto result = recv_data(conn, context, notifier)) {
                 return *result;
             }
             if (auto result = send_data(conn, context)) {
@@ -69,7 +69,7 @@ namespace web_server {
             return network::wait_ops::wait_read_write;
         }
     private:    
-        std::optional<network::wait_ops> recv_data(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context) {
+        std::optional<network::wait_ops> recv_data(network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context, network::socket_container_notifier& notifier) {
             if (context->response_data.empty()) {        
                 auto [status, code] = conn.recv_pkt(context->recv_buffer);
                 switch (status) {
@@ -78,7 +78,7 @@ namespace web_server {
                         util::logger::log_debug("Received " + std::to_string(read_region.size()) + " bytes from " + context->name);
 
                         if (!context->is_native) {
-                            auto n = m_mod_adapter.handle_http_request(read_region, context);
+                            auto n = m_mod_adapter.handle_http_request(read_region, context, notifier);
                             context->recv_buffer.read(read_region.splice(0, n));
                         } else {
                             auto n = m_mod_adapter.handle_native_request(context->native_module_id, read_region, context);

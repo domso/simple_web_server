@@ -21,10 +21,8 @@ namespace web_server {
         }
         network::pkt_buffer recv_buffer = {1024 * 16};
         std::vector<char> response_data;
-        uint64_t id;
         std::string name;
 
-        network::socket_container_notifier notifier;  
         bool is_native = false;
         size_t native_module_id;
         

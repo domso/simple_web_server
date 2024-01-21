@@ -30,7 +30,7 @@ namespace web_server::module {
             return m_mod_invoker.template get<Treq>();
         }
 
-        size_t handle_http_request(const network::memory_region read_region, std::shared_ptr<unique_context<T, Ts...>>& context) {
+        size_t handle_http_request(const network::memory_region read_region, std::shared_ptr<unique_context<T, Ts...>>& context, network::socket_container_notifier& notifier) {
             for (size_t i = 3; i < read_region.size(); i++) {
                 if (read_region.data()[i - 0] == '\n' &&
                     read_region.data()[i - 1] == '\r' &&
@@ -44,7 +44,7 @@ namespace web_server::module {
                         util::logger::log_debug("Requested ressource " + request->resource);
                         util::logger::log_debug("Requested module " + request->module);
 
-                        response = m_mod_invoker.call(*request, context);
+                        response = m_mod_invoker.call(*request, context, notifier);
 
                         if (response.code == 0) {
                             response.code = 404;
