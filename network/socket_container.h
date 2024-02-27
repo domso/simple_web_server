@@ -112,7 +112,7 @@ namespace network {
             uint64_t buf = 1;
             assert(write(m_external_interrupt_context->eventfd, &buf, sizeof(buf)) != -1);
         }
-    private:
+
         socket_container_notifier notifier(const uint64_t fd) {
             socket_container_notifier notifier;
             notifier.context = m_external_interrupt_context;
@@ -120,7 +120,7 @@ namespace network {
 
             return notifier;
         }
-
+    private:
         template<typename T_call>
         void call_callback(item* current, const T_call& call) {
             int fd = current->fd;

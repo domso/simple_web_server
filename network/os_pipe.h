@@ -38,12 +38,16 @@ namespace network {
             close(m_fds[0]);
             close(m_fds[1]);
             m_fds = {0, 0};
+            m_size = 0;
         }
         int write_fd() const {
             return m_fds[1];
         }
         int read_fd() const {
             return m_fds[0];
+        }
+        size_t size() const {
+            return m_size;
         }
         template<typename T>
         bool read_from(T& s) {
@@ -52,6 +56,8 @@ namespace network {
             if (e <= 0) {
                 close_pipe();
             }
+
+            m_size += e;
 
             return e > 0;
         }
@@ -63,9 +69,12 @@ namespace network {
                 close_pipe();
             }
 
+            m_size -= e;
+
             return e > 0;
         }
     private:
         std::array<int, 2> m_fds;
+        size_t m_size = 0;
     };
 }
