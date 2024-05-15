@@ -65,6 +65,15 @@ public:
             return false;
         }
 
+        socklen_t addrlen = static_cast<socklen_t>(sizeof(*(this->m_addr.internal_handle())));
+        if (getsockname(
+                    this->m_skt,
+                    reinterpret_cast<struct sockaddr*>(this->m_addr.internal_handle()),
+                    &addrlen) != 0
+           ) {
+            return false;
+        }
+
         return true;
     }
 

@@ -76,8 +76,8 @@ private:
         
         for (size_t i = 0; i < T_config::template get_value<"num_worker">(); i++) {
             auto worker_instance = std::make_unique<worker_type>(T_config::template get_value<"worker_poll_timeout">(), T_config::template get_value<"worker_poll_buffer_size">());
-            worker_instance->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context){
-                return m_net_if.update(conn, context);                        
+            worker_instance->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<unique_context<T, Ts...>>& context, network::socket_container_notifier& notifier){
+                return m_net_if.update(conn, context, notifier);
             });
             m_http_workers.push_back(std::move(worker_instance));
         }
@@ -88,7 +88,7 @@ private:
         
         m_select_worker = 0;
         m_bouncer_worker = std::make_unique<worker_type>(T_config::template get_value<"accept_poll_timeout">(), T_config::template get_value<"accept_poll_buffer_size">());
-        m_bouncer_worker->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void>&){
+        m_bouncer_worker->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void>&, network::socket_container_notifier& notifier){
             auto id = m_select_worker++;
             if (m_select_worker == m_http_workers.size()) {
                 m_select_worker = 0;

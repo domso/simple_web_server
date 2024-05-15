@@ -17,9 +17,9 @@ namespace network {
         std::vector<uint64_t> call_list;
         int eventfd;
 
-        void add_to_call_list(const uint64_t id) {
+        void add_to_call_list(const uint64_t fd) {
             std::lock_guard<std::mutex> lg(mutex);
-            call_list.push_back(id);
+            call_list.push_back(fd);
         }
 
         void interrupt() {
@@ -29,17 +29,17 @@ namespace network {
     };
     struct socket_container_notifier {
         std::shared_ptr<socket_container_external_interrupt_context> context;
-        uint64_t id;
+        uint64_t fd;
 
         void notify() {
             if (context) {
-                context->add_to_call_list(id);
+                context->add_to_call_list(fd);
                 context->interrupt();
             }
         }
     };
 
-    template<typename T>
+    template<typename T_socket, typename T_data>
     class socket_container {
     public:
         socket_container(const size_t buffer_size) : m_events(buffer_size) {
@@ -52,7 +52,6 @@ namespace network {
         }
 
         ~socket_container() {
-            update_item_map();
             for (auto& [key, value] : m_item_map) {
                 delete value;
             }
@@ -67,26 +66,40 @@ namespace network {
         void operator=(const socket_container&) = delete;
         void operator=(const socket_container&&) = delete;
 
-        void add_socket(T&& skt) {
-            auto new_skt = new T(std::move(skt));
+        struct item {
+            T_data data;
+            T_socket socket;            
+            int fd;
+            socket_container_notifier notifier;  
+        };
+
+        void add_socket(T_socket&& skt, T_data& data, const bool write = true) {
+            auto fd = skt.get_socket();
+            auto new_item = new item{
+                .data = data,
+                .socket = std::forward<T_socket>(skt),
+                .fd = fd,
+                .notifier = notifier(fd)
+            };
             {
                 std::unique_lock ul(m_mutex);
-                add_fd(new_skt->get_fd(), reinterpret_cast<void*>(new_skt), true);
-                m_item_queue.push_back({new_skt->get_id(), new_skt});
+                m_item_map[new_item->fd] = new_item;
             }
+            add_fd(new_item->fd, reinterpret_cast<void*>(new_item), write);
         }
 
-        bool wait(std::function<wait_ops(T& skt)> call, const int timeout) {
+        template<typename T_call>
+        bool wait(const T_call& call, const int timeout) {
             int result = epoll_wait(m_epfd, m_events.data(), m_events.size(), timeout);
             assert(result >= 0);
 
             for (int i = 0; i < result; i++) {
-                T* skt = static_cast<T*>(m_events[i].data.ptr);
-                if (skt == nullptr) {
+                item* ptr = static_cast<item*>(m_events[i].data.ptr);
+                if (ptr == nullptr) {
                     uint64_t buf;
                     assert(read(m_external_interrupt_context->eventfd, &buf, sizeof(buf)) != -1);
                 } else {
-                    call_callback(skt, call);
+                    call_callback(ptr, call);
                 }
             }
 
@@ -100,36 +113,39 @@ namespace network {
             assert(write(m_external_interrupt_context->eventfd, &buf, sizeof(buf)) != -1);
         }
 
-        socket_container_notifier notifier(const uint64_t id) {
+        socket_container_notifier notifier(const uint64_t fd) {
             socket_container_notifier notifier;
             notifier.context = m_external_interrupt_context;
-            notifier.id = id;
+            notifier.fd = fd;
 
             return notifier;
         }
     private:
-        void call_callback(T* skt, std::function<wait_ops(T& skt)>& call) {
-            int fd = skt->get_fd();
-            auto op = call(*skt);
+        template<typename T_call>
+        void call_callback(item* current, const T_call& call) {
+            int fd = current->fd;
+            auto op = call(current->socket, current->data, current->notifier);
 
             switch (op) {
                 case wait_write: {
-                    set_rw(fd, skt, false, true);
+                    set_rw(fd, current, false, true);
                     break;
                 }
                 case wait_read: {
-                    set_rw(fd, skt, true, false);
+                    set_rw(fd, current, true, false);
                     break;
                 }
                 case wait_read_write: {
-                    set_rw(fd, skt, true, true);
+                    set_rw(fd, current, true, true);
                     break;
                 }
                 case remove: {
                     remove_fd(fd);
-                    update_item_map();
-                    m_item_map.erase(skt->get_id());
-                    delete skt;
+                    {
+                        std::unique_lock ul(m_mutex);
+                        m_item_map.erase(fd);
+                    }
+                    delete current;
                     break;
                 }
             }
@@ -140,7 +156,8 @@ namespace network {
             return std::move(m_external_interrupt_context->call_list);
         }
 
-        int clear_notify_list(std::function<wait_ops(T& skt)>& call) {
+        template<typename T_call>
+        int clear_notify_list(const T_call& call) {
             std::vector<uint64_t> list = get_notify_list();
             int result = 0;
 
@@ -191,17 +208,8 @@ namespace network {
             assert(result == 0 || errno == EBADF);
         }
 
-        void update_item_map() {
-            std::unique_lock ul(m_mutex);
-            for (auto [k, v] : m_item_queue) {
-                m_item_map.insert({k, v});
-            }
-            m_item_queue.clear();
-        }
-
         std::vector<epoll_event> m_events;
-        std::unordered_map<uint64_t, T*> m_item_map;
-        std::vector<std::pair<uint64_t, T*>> m_item_queue;
+        std::unordered_map<int, item*> m_item_map;
         std::mutex m_mutex;
 
         int m_epfd;

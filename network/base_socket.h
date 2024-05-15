@@ -156,7 +156,7 @@ namespace network {
         */
         std::pair<bool, int> check_error(int result) const {
             if (result == -1) {
-                return std::make_pair((errno == EAGAIN || errno == EWOULDBLOCK), errno);
+                return std::make_pair((errno == EAGAIN || errno == EWOULDBLOCK), 0);
             } else if (result == 0) {
                 return std::make_pair(false, 0);
             } else {

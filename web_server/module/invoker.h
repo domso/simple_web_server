@@ -22,7 +22,8 @@ namespace web_server::module {
         template<typename Tcontext>
         auto call(
             http::request& request,
-            Tcontext& context
+            Tcontext& context,
+            network::socket_container_notifier& notifier
         ) {
             http::response result;
             result.code = 404;
@@ -36,7 +37,7 @@ namespace web_server::module {
                                 context->is_native = true;                
                                 context->native_module_id = m_instances.id<Tdef>();
                                 auto& userdata = context->userdata.template get<util::tagged_type<typename decltype(definition.instance)::userdata, Tdef>>().instance;
-                                definition.instance.native_open_callback(userdata, context->notifier);
+                                definition.instance.native_open_callback(userdata, notifier);
                             } else {
                                 result.code = 404;
                             }
@@ -54,7 +55,7 @@ namespace web_server::module {
                                     context->is_native = true;                
                                     context->native_module_id = m_instances.id<Tdef>();
                                     auto& userdata = context->userdata.template get<util::tagged_type<typename decltype(definition.instance)::userdata, Tdef>>().instance;
-                                    definition.instance.native_open_callback(userdata, context->notifier);
+                                    definition.instance.native_open_callback(userdata, notifier);
                                 } else {
                                     result.code = 404;
                                 }

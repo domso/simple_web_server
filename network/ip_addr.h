@@ -79,6 +79,10 @@ namespace network {
             return &m_network_addr_v4;
         }
 
+        sockaddr_in* internal_handle() {
+            return &m_network_addr_v4;
+        }
+
         int family() const {
             return AF_INET;
         }
@@ -119,6 +123,10 @@ namespace network {
         }
 
         const sockaddr_in6* internal_handle() const {
+            return &m_network_addr_v6;
+        }
+
+        sockaddr_in6* internal_handle() {
             return &m_network_addr_v6;
         }
 

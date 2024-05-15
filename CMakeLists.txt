@@ -12,6 +12,8 @@ add_library(web_server SHARED
     util/base64.cpp
     util/logger.cpp
     util/signal_interrupt.cpp
+    util/command_line_argument_parser.cpp
+    util/table_converter.cpp
     web_server/http/status_code.cpp 
     web_server/http/parser.cpp 
     
@@ -23,10 +25,14 @@ add_library(web_server SHARED
 
 add_executable(proxy_sender 
     util/proxy_sender.cpp
+    util/command_line_argument_parser.cpp
+    util/table_converter.cpp
 )
 
 add_executable(proxy_receiver
     util/proxy_receiver.cpp
+    util/command_line_argument_parser.cpp
+    util/table_converter.cpp
 )
 
 target_link_libraries(web_server ${OPENSSL_LIBRARIES})
