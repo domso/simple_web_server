@@ -20,6 +20,10 @@ namespace util {
         }
 
         template<typename Tcall>
+        void for_each(const Tcall& call) const {
+        }
+
+        template<typename Tcall>
         void for_id(const size_t id, const Tcall& call) {
         }
 
@@ -53,6 +57,12 @@ namespace util {
 
         template<typename Tcall>
         void for_each(const Tcall& call) {
+            call.template operator()<T>(local);
+            others.template for_each(call);
+        }
+
+        template<typename Tcall>
+        void for_each(const Tcall& call) const {
             call.template operator()<T>(local);
             others.template for_each(call);
         }
