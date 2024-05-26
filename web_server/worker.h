@@ -21,7 +21,7 @@ namespace web_server {
         worker(const size_t poll_timeout, const size_t poll_buffer_size) : m_running(false), m_poll_timeout(poll_timeout), m_sockets(poll_buffer_size) {}
 
         template<typename call_T> 
-        void start(const call_T& call) {            
+        void start(const call_T& call) {
             m_running = true;
 
             m_thread = std::thread([call, this]() {
@@ -65,7 +65,8 @@ namespace web_server {
             std::lock_guard<std::mutex> lg(m_mutex);
             
             for (auto& skt : m_backlog) {
-                m_sockets.add_socket(std::move(skt), std::make_shared<arg_T>());
+                auto arg = std::make_shared<arg_T>();
+                m_sockets.add_socket(std::move(skt), arg);
             }
             
             m_backlog.clear();

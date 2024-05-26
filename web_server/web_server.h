@@ -84,11 +84,11 @@ private:
     }
 
     void start_bouncer_worker() {
-        typedef worker<network::ssl_connection<network::ipv4_addr>, void> worker_type;
+        typedef worker<network::ssl_connection<network::ipv4_addr>, void*> worker_type;
         
         m_select_worker = 0;
         m_bouncer_worker = std::make_unique<worker_type>(T_config::template get_value<"accept_poll_timeout">(), T_config::template get_value<"accept_poll_buffer_size">());
-        m_bouncer_worker->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void>&, network::socket_container_notifier& notifier){
+        m_bouncer_worker->start([&](network::ssl_connection<network::ipv4_addr>& conn, std::shared_ptr<void*>&, network::socket_container_notifier& notifier){
             auto id = m_select_worker++;
             if (m_select_worker == m_http_workers.size()) {
                 m_select_worker = 0;
@@ -101,7 +101,7 @@ private:
     network::ssl_context<network::ipv4_addr> m_ssl_context;
 
     std::vector<std::unique_ptr<worker<network::ssl_connection<network::ipv4_addr>, unique_context<T, Ts...>>>> m_http_workers;
-    std::unique_ptr<worker<network::ssl_connection<network::ipv4_addr>, void>> m_bouncer_worker;
+    std::unique_ptr<worker<network::ssl_connection<network::ipv4_addr>, void*>> m_bouncer_worker;
     size_t m_select_worker;
     
     network_interface<T_config, T, Ts...> m_net_if;
