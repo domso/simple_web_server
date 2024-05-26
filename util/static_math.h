@@ -34,18 +34,6 @@ namespace internal {
     constexpr T exp_check() {
         return b * exp_check<T, b, n - 1>();
     }       
-    
-    template<typename T, int n, int s>
-        requires is_smaller_or_equal<T, sizeof(T) * 8, n * s>
-    T bitbloat_check(const T v) {
-        return 0;
-    }
-
-    template<typename T, int n, int s>
-        requires (!is_smaller_or_equal<T, sizeof(T) * 8, n * s>)
-    T bitbloat_check(const T v) {
-        return warp_bit<T, n, n * s - n>(v) | bitbloat_check<T, n + 1, s>(v);
-    }
 }
 
 template<typename T, T b, T n>
@@ -66,6 +54,20 @@ constexpr T round_up_division() {
 template<typename T, int pos, int offset>
 T warp_bit(const T v) {
     return (v & exp<T, 2, pos>()) << offset;
+}
+
+namespace internal {
+    template<typename T, int n, int s>
+        requires is_smaller_or_equal<T, sizeof(T) * 8, n * s>
+    T bitbloat_check(const T v) {
+        return 0;
+    }
+
+    template<typename T, int n, int s>
+        requires (!is_smaller_or_equal<T, sizeof(T) * 8, n * s>)
+    T bitbloat_check(const T v) {
+        return warp_bit<T, n, n * s - n>(v) | bitbloat_check<T, n + 1, s>(v);
+    }
 }
 
 template<typename T, int s>

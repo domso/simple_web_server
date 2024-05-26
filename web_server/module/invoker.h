@@ -35,7 +35,7 @@ namespace web_server::module {
                         if (result.code == 101) {
                             if constexpr (web_server::module::has_native_support<decltype(definition.instance)>) {
                                 context->is_native = true;                
-                                context->native_module_id = m_instances.id<Tdef>();
+                                context->native_module_id = m_instances.template id<Tdef>();
                                 auto& userdata = context->userdata.template get<util::tagged_type<typename decltype(definition.instance)::userdata, Tdef>>().instance;
                                 definition.instance.native_open_callback(userdata, notifier);
                             } else {
@@ -53,7 +53,7 @@ namespace web_server::module {
                             if (result.code == 101) {
                                 if constexpr (web_server::module::has_native_support<decltype(definition.instance)>) {
                                     context->is_native = true;                
-                                    context->native_module_id = m_instances.id<Tdef>();
+                                    context->native_module_id = m_instances.template id<Tdef>();
                                     auto& userdata = context->userdata.template get<util::tagged_type<typename decltype(definition.instance)::userdata, Tdef>>().instance;
                                     definition.instance.native_open_callback(userdata, notifier);
                                 } else {
