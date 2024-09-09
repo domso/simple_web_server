@@ -100,7 +100,7 @@ namespace json {
             }
         }
 
-        parser::parser m_grammar_parser;
+        parsery::parser m_grammar_parser;
         std::vector<std::string> m_name_stack;
         std::vector<json::parse_tree_node*> m_node_stack;
         bool m_ignore = false;
