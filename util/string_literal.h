@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <array>
+#include <algorithm>
 
 #include "static_math.h"
 #include "string.h"

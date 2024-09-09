@@ -45,6 +45,14 @@ namespace util {
                 return others.template get<Treq>();
             }
         }
+        template<typename Treq>
+        const auto& get() const {
+            if constexpr (std::is_same<T, Treq>::value) {
+                return local;
+            } else {
+                return others.template get<Treq>();
+            }
+        }
 
         template<typename Treq>
         bool has() {

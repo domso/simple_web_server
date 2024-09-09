@@ -25,6 +25,11 @@ namespace util {
         auto operator+(const pack_iteratable<Tothers...>& other) {
             return other;
         }
+
+        template<int n>
+        struct get {
+            typedef std::false_type type;
+        };
     };
 
     template<typename T, typename... Ts>
@@ -59,6 +64,16 @@ namespace util {
         auto operator+(const pack_iteratable<Tothers...>& other) {
             return pack_iteratable<T, Ts..., Tothers...>();
         }
+
+        template<int n>
+        struct get {
+            typedef typename pack_iteratable<Ts...>::get<n - 1>::type type;
+        };
+        template<int n>
+            requires (n == 0)
+        struct get<n> {
+            typedef T type;
+        };
 
         typedef pack_instances<T, Ts...> instance;
     };
